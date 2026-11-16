@@ -183,6 +183,30 @@ namespace MagicCircle
 
         public static bool IsHidden => _hidden;
 
+        /// <summary>Run <paramref name="action"/> with the hidden bones at full scale (their place unchanged), then shrink them
+        /// again - for telling the limb's own skin from everything else in a bake (only its skin moves).</summary>
+        public static void WithLimbsGrown(Animator anim, Action action)
+        {
+            if (!_hidden) { action(); return; }
+            var saved = new Vector3[Hidden.Length];
+            for (int i = 0; i < Hidden.Length; i++)
+            {
+                var t = anim.GetBoneTransform(Hidden[i]);
+                if (t == null) continue;
+                saved[i] = t.localScale;
+                t.localScale = saved[i] / Tiny;
+            }
+            try { action(); }
+            finally
+            {
+                for (int i = 0; i < Hidden.Length; i++)
+                {
+                    var t = anim.GetBoneTransform(Hidden[i]);
+                    if (t != null) t.localScale = saved[i];
+                }
+            }
+        }
+
         // --- helpers -------------------------------------------------------------------------------------------------------
 
         internal static Vector3 U(NVector3 v) => new Vector3(v.X, v.Y, v.Z);

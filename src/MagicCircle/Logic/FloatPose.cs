@@ -104,6 +104,28 @@ namespace MagicCircle.Logic
         /// <summary>The largest distance along <paramref name="axis"/> (unit, from the upper bone towards the joint) of the points
         /// within <paramref name="radius"/> of the axis line through <paramref name="collapse"/> and at most
         /// <paramref name="maxReach"/> past it (farther points belong to something else: hair, the other limb); 0 if none is past.</summary>
+        /// <summary>Which limb a vertex belongs to: the segment (lower bone to its child, with the bones at full size) nearest
+        /// to its full-size position. A radius test alone mixes limbs up: walking, the knees pass a few cm from each other.</summary>
+        public static int Owner(Vector3 grown, System.Collections.Generic.IReadOnlyList<(Vector3 From, Vector3 To)> segments)
+        {
+            int best = -1;
+            float bestD = float.MaxValue;
+            for (int i = 0; i < segments.Count; i++)
+            {
+                float d = SegmentDistanceSquared(grown, segments[i].From, segments[i].To);
+                if (d < bestD) { bestD = d; best = i; }
+            }
+            return best;
+        }
+
+        public static float SegmentDistanceSquared(Vector3 p, Vector3 a, Vector3 b)
+        {
+            Vector3 ab = b - a;
+            float len2 = ab.LengthSquared();
+            float t = len2 < 1e-12f ? 0f : Math.Clamp(Vector3.Dot(p - a, ab) / len2, 0f, 1f);
+            return (p - (a + t * ab)).LengthSquared();
+        }
+
         public static float Reach(System.Collections.Generic.IReadOnlyList<Vector3> points, Vector3 collapse, Vector3 axis, float radius, float maxReach)
         {
             float best = 0f, r2 = radius * radius;
@@ -117,5 +139,45 @@ namespace MagicCircle.Logic
             }
             return best;
         }
+    }
+
+    /// <summary>
+    /// Steadies a measured stump reach so the circle does not follow every step: the target is the largest measurement of the last
+    /// <see cref="HoldSeconds"/>; the shown value rises to it fast (the stump must stay hidden) and sinks slowly. Walking moves the
+    /// knee's skin 2.5 - 6.6 cm past the joint with each step [observed 2026-11-16]: the circle settles once, then stays.
+    /// </summary>
+    public sealed class ReachHold
+    {
+        public float HoldSeconds = 20f, RiseSpeed = 0.25f, SinkSpeed = 0.01f; // s, m/s, m/s
+
+        private readonly System.Collections.Generic.List<(float Time, float Value)> _seen = new System.Collections.Generic.List<(float, float)>();
+        private bool _started;
+
+        public float Shown { get; private set; }
+
+        public void Add(float time, float value)
+        {
+            _seen.Add((time, value));
+            if (!_started) { Shown = value; _started = true; }
+        }
+
+        public float Target(float time)
+        {
+            _seen.RemoveAll(s => time - s.Time > HoldSeconds);
+            float best = 0f;
+            foreach (var s in _seen) best = Math.Max(best, s.Value);
+            return best;
+        }
+
+        /// <summary>Advance the shown value by <paramref name="dt"/> seconds towards the target at <paramref name="time"/>.</summary>
+        public float Step(float time, float dt)
+        {
+            if (!_started) return 0f;
+            float target = Target(time);
+            Shown = target > Shown ? Math.Min(target, Shown + RiseSpeed * dt) : Math.Max(target, Shown - SinkSpeed * dt);
+            return Shown;
+        }
+
+        public void Reset() { _seen.Clear(); _started = false; Shown = 0f; }
     }
 }

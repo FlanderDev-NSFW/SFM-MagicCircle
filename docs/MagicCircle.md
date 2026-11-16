@@ -42,7 +42,15 @@ A RestraintHub wearable (`Id` `MagicCircle`, hub `^2.0.0`): four glowing circles
   all collapse - it ended in a tip a few cm past the collapse point. Every 0.5 s while hidden, all her enabled skinned meshes
   (body and clothes, ~60 000 points) are baked in onPreCull (the shrunk bones as drawn) and, per limb, the farthest point within
   1.1x the hole's radius of the limb axis and at most 10 cm past the collapse point is found (the larger of the last two bakes).
-  First save: knees 2.5 cm, elbows 3.5 cm (the coat's sleeves). The circle goes 0.4 cm beyond that, and an opaque **portal
+  First save: knees 2.5 cm, elbows 3.5 cm (the coat's sleeves).
+  **Only each limb's own skin counts:** the first version took every point near the limb axis; walking, the other knee's stump
+  (7-8 cm off the axis) entered and the circles jumped (2.5 -> 3.8 / 6.7 cm). Now each bake is done twice, the second with the
+  shrunk bones grown back (`FloatPoser.WithLimbsGrown`); vertices that move > 2 mm are the limbs' own and go to the limb whose
+  full-size lower segment is nearest (`Stump.Owner`). The knee's own skin still reaches up to 6.6 cm past the joint while walking
+  (real: it moves with the shin, on the shin's surface when grown back), so the reach is steadied (`ReachHold`: largest of the last
+  20 s, rising at 25 cm/s, sinking at 1 cm/s): walking, the knee circles settled once (2.5 -> 4.3 / 6.7 cm) and then stayed.
+  Diagnostics: `game get MagicCircle.StumpMeter::Farthest` (per limb the renderer, vertex, reach, off-axis distance, how far it
+  moved, its distance from its segment). The circle goes 0.4 cm beyond that, and an opaque **portal
   surface** fills its hole up to the inner ring (r 0.6 of the circle): `Unlit/Texture` (opaque, writes depth like a solid, so it
   hides the limb's end seen from beyond the circle), a two-sided disc, dark middle brightening to the rim with a faint swirl,
   tinted with `Look.Color`, turning slowly. No depth-mask shader is available (none loaded, none can be compiled without the

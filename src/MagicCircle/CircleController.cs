@@ -399,7 +399,7 @@ namespace MagicCircle
                     // Neighbouring circles turn opposite ways.
                     _rig.Place(i, FloatPoser.U(center), b.position - a.position, r, (left ? spin : -spin) + i * 37f, show, hidden && _stump.Valid);
                 }
-                if (hidden) _stump.Tick(anim, _limbs);
+                if (hidden) { _stump.Tick(anim, _limbs); _stump.Step(Time.unscaledDeltaTime); } // bakes shrunk and grown: only the limbs' own skin counts
                 _rig.Shade(Plugin.Color.Value, Plugin.Glow.Value, pulse, show);
             }
             catch (Exception e) { Fail("placing the circles", e); }

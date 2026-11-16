@@ -87,6 +87,22 @@ namespace MagicCircle.Tests
             var pts = new[] { new Vector3(0, 0.05f, 0), new Vector3(0.01f, -0.02f, 0), new Vector3(0.2f, -0.06f, 0), new Vector3(0, -0.3f, 0), new Vector3(0.005f, -0.035f, 0.01f) };
             Check(Near(Stump.Reach(pts, Vector3.Zero, axis, 0.04f, 0.1f), 0.035f), "stump: farthest skin near the axis; far off the axis or too far along ignored");
             Check(Stump.Reach(new[] { new Vector3(0, 0.1f, 0) }, Vector3.Zero, axis, 0.04f, 0.1f) == 0f, "stump: nothing past the point -> 0");
+            var segs = new[] { (new Vector3(-0.1f, 0.5f, 0), new Vector3(-0.1f, 0.1f, 0)), (new Vector3(0.1f, 0.5f, 0), new Vector3(0.1f, 0.1f, 0)) };
+            Check(Stump.Owner(new Vector3(0.09f, 0.3f, 0.02f), segs) == 1 && Stump.Owner(new Vector3(-0.12f, 0.52f, 0), segs) == 0,
+                  "stump: a vertex belongs to the limb whose full-size segment is nearest");
+            var hold = new ReachHold();
+            hold.Add(0f, 0.025f);
+            Check(Near(hold.Shown, 0.025f), "reach hold: the first measurement at once");
+            hold.Add(1f, 0.066f);
+            hold.Step(1.05f, 0.05f);
+            Check(hold.Shown > 0.025f && hold.Shown < 0.066f, "reach hold: rises towards a larger one (fast, not a jump)");
+            for (int k = 0; k < 20; k++) hold.Step(1.1f + 0.05f * k, 0.05f);
+            Check(Near(hold.Shown, 0.066f), "reach hold: reaches it within a fraction of a second");
+            hold.Add(2f, 0.025f);
+            hold.Step(5f, 1f);
+            Check(Near(hold.Shown, 0.066f), "reach hold: a smaller step later does not pull it back (held 20 s)");
+            hold.Step(22f, 1f);
+            Check(hold.Shown < 0.066f && hold.Shown > 0.05f, "reach hold: after the hold it sinks slowly");
             var portal = CirclePattern.Portal(64);
             Check(portal[32 * 64 + 32] < portal[32 * 64 + 62], "portal surface: dark middle, brighter rim");
         }
