@@ -5,7 +5,7 @@
     <AssemblyName>MagicCircle</AssemblyName>
     <RootNamespace>MagicCircle</RootNamespace>
     <Version>0.1.0</Version>
-    <Description>MagicCircle - SecretFlasherManaka BepInEx IL2CPP mod</Description>
+    <Description>MagicCircle - glowing magic circles that hold her (RestraintHub wearable) for SecretFlasherManaka (BepInEx IL2CPP)</Description>
     <!-- Compiles against RestraintHub (build/SfmMod.targets); players install it separately. -->
     <SfmUsesRestraintHub>true</SfmUsesRestraintHub>
   </PropertyGroup>
