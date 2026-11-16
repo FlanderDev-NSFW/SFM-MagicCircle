@@ -61,6 +61,24 @@ namespace MagicCircle.Logic
             return ToBytes(a, size, ClearRadius - 0.06f);
         }
 
+        /// <summary>The portal surface filling the circle's hole (it hides the limb's end): brightness 0..255, a dark middle
+        /// brightening towards the rim, with a faint swirl.</summary>
+        public static byte[] Portal(int size)
+        {
+            var b = new byte[size * size];
+            float h = size / 2f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float r = Math.Min(1f, Radius(x, y, size));
+                    double angle = Math.Atan2(y + 0.5 - h, x + 0.5 - h);
+                    float swirl = 0.5f + 0.5f * (float)Math.Sin(5 * angle + 9 * r);
+                    float v = 0.10f + 0.55f * r * r * r + 0.10f * swirl * r;
+                    b[y * size + x] = (byte)Math.Round(Math.Clamp(v, 0f, 1f) * 255f);
+                }
+            return b;
+        }
+
         /// <summary>A pixel's distance from the middle, as a fraction of the half size.</summary>
         public static float Radius(int x, int y, int size)
         {

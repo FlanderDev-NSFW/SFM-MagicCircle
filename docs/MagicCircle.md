@@ -38,6 +38,15 @@ A RestraintHub wearable (`Id` `MagicCircle`, hub `^2.0.0`): four glowing circles
   they went to 10000, hands and feet showed again at full size on thin stretched skin, and would have been 10000x after
   release.** Fixed by scaling any child of a hidden bone that is over 100x back by 1e-4 each frame (log "portal: undid the
   game's scale compensation on ...").
+- **No stump visible (`StumpMeter`, `Stump.Reach`):** the skin around the joint is partly bound to the upper bone and does not
+  all collapse - it ended in a tip a few cm past the collapse point. Every 0.5 s while hidden, all her enabled skinned meshes
+  (body and clothes, ~60 000 points) are baked in onPreCull (the shrunk bones as drawn) and, per limb, the farthest point within
+  1.1x the hole's radius of the limb axis and at most 10 cm past the collapse point is found (the larger of the last two bakes).
+  First save: knees 2.5 cm, elbows 3.5 cm (the coat's sleeves). The circle goes 0.4 cm beyond that, and an opaque **portal
+  surface** fills its hole up to the inner ring (r 0.6 of the circle): `Unlit/Texture` (opaque, writes depth like a solid, so it
+  hides the limb's end seen from beyond the circle), a two-sided disc, dark middle brightening to the rim with a faint swirl,
+  tinted with `Look.Color`, turning slowly. No depth-mask shader is available (none loaded, none can be compiled without the
+  Unity editor), so the opaque surface is the occluder.
 
 ## Diagnostics (bridge, `--allow-invoke`)
 `game get MagicCircle.CircleController::Status` ("Locked, floating (w 1.00), elbows and knees, hidden yes, shader ..."),
@@ -55,5 +64,9 @@ Shaders <part>`. `Debug.Disable`: 1 = no pose, 2 = no hiding. Log markers: `put 
   PC -> Save while floating: "save: locked=True stage=1"; restart + load -> floating, portal hidden; the adjuster
   compensation found and undone (above), screenshot; release -> all scales 1, normal hands and feet (screenshot). Yoke on,
   + -> "The circles can't hold her while the Yoke is on.".
+- L3 portal surface (2026-11-16): "portal surface: Unlit/Texture", "stump: reach 3.5 / 3.5 / 2.5 / 2.5 cm ... from 60119 skin
+  points"; floating, close-ups of the knees from the front, the side and below and of the elbows from below and above: the limbs
+  end in the surface, no skin past the circles, the stump ends hidden from beyond (screenshots); standing in the "circles only"
+  stage likewise. Not tested: deep knee bends (crawling), other clothes.
 - Not tested: the RestraintHub panel row (bridge diagnostics used instead of `U`; same `PutOn`), the closet changing her body
   while hidden (same adjuster mechanism), missions, other characters' proportions, outdoor maps.

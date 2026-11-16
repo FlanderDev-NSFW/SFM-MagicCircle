@@ -83,6 +83,12 @@ namespace MagicCircle.Tests
             Check(Near(p.Y, -0.28f), "circle spot: 2 cm before the joint towards its parent");
             Check(Near(CircleSpot.Before(Vector3.Zero, new Vector3(0, 0.1f, 0), 1f).Y, 0.05f), "circle spot: never past the segment's middle");
             Check(Near(CircleSpot.OuterRadius(0.03f, 1.4f) * CirclePattern.ClearRadius, 0.042f), "circle size: the hole 1.4x the limb");
+            var axis = new Vector3(0, -1, 0);
+            var pts = new[] { new Vector3(0, 0.05f, 0), new Vector3(0.01f, -0.02f, 0), new Vector3(0.2f, -0.06f, 0), new Vector3(0, -0.3f, 0), new Vector3(0.005f, -0.035f, 0.01f) };
+            Check(Near(Stump.Reach(pts, Vector3.Zero, axis, 0.04f, 0.1f), 0.035f), "stump: farthest skin near the axis; far off the axis or too far along ignored");
+            Check(Stump.Reach(new[] { new Vector3(0, 0.1f, 0) }, Vector3.Zero, axis, 0.04f, 0.1f) == 0f, "stump: nothing past the point -> 0");
+            var portal = CirclePattern.Portal(64);
+            Check(portal[32 * 64 + 32] < portal[32 * 64 + 62], "portal surface: dark middle, brighter rim");
         }
     }
 }

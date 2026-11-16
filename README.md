@@ -33,8 +33,8 @@ the floating height, arm and leg angles, the bob and how fast she rises; how har
 
 ## Good to know
 - The circles' place (wrists / elbows) is remembered in the settings; the stage and whether it is on are kept in the save.
-- Hiding the limbs shrinks them into the elbows and knees: a small tip of the knee can show just past the circle. In the
-  "circles only" stage with the portal placement she still walks as if she had lower legs.
+- With the circles at her elbows and knees, each circle is filled with a dark glowing portal surface: her limbs end in it,
+  nothing of them shows past it. In the "circles only" stage she still walks as if she had lower legs.
 
 Single-player / offline only. Code: MIT licence (`LICENSE.txt`). The circles are drawn in code (no model or image files).
 

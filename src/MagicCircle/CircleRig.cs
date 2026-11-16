@@ -14,9 +14,11 @@ namespace MagicCircle
     {
         private const int TextureSize = 256;
         private GameObject _root;
-        private readonly Transform[] _circles = new Transform[4], _halos = new Transform[4];
+        private readonly Transform[] _circles = new Transform[4], _halos = new Transform[4], _portals = new Transform[4];
         private readonly List<UnityEngine.Object> _owned = new List<UnityEngine.Object>();
-        private Material _circleMat, _haloMat;
+        private Material _circleMat, _haloMat, _portalMat;
+        private Texture2D _portalTex;
+        private byte[] _portalShade;
         private string _colorHex;
 
         /// <summary>The shader chosen (diagnostics).</summary>
@@ -44,7 +46,9 @@ namespace MagicCircle
             Shader shader = PickShader();
             _circleMat = MakeMaterial(shader, MakeTexture(CirclePattern.Circle(TextureSize, 7), "MagicCircle.Circle"), "MagicCircle.Circle");
             _haloMat = MakeMaterial(shader, MakeTexture(CirclePattern.Halo(TextureSize / 2), "MagicCircle.Halo"), "MagicCircle.Halo");
+            _portalMat = MakePortalMaterial();
             _colorHex = null;
+            var disc = MakeDisc();
             for (int i = 0; i < 4; i++)
             {
                 var limb = new GameObject("Circle" + i);
@@ -52,6 +56,8 @@ namespace MagicCircle
                 limb.transform.SetParent(_root.transform, false);
                 _halos[i] = Part(limb.transform, "Glow", quad, _haloMat, layer);
                 _circles[i] = Part(limb.transform, "Runes", quad, _circleMat, layer);
+                _portals[i] = Part(limb.transform, "Portal", disc, _portalMat, layer);
+                _portals[i].gameObject.SetActive(false);
             }
             _root.SetActive(false);
         }
@@ -73,8 +79,15 @@ namespace MagicCircle
         /// <summary>Place circle <paramref name="i"/> at <paramref name="center"/>, facing along <paramref name="axis"/> (the limb),
         /// <paramref name="radius"/> metres across its outer ring, turned by <paramref name="spinDeg"/>; <paramref name="show"/>
         /// 0..1 grows it in.</summary>
-        public void Place(int i, Vector3 center, Vector3 axis, float radius, float spinDeg, float show)
+        public void Place(int i, Vector3 center, Vector3 axis, float radius, float spinDeg, float show, bool portal = false)
         {
+            if (_portals[i] != null)
+            {
+                if (_portals[i].gameObject.activeSelf != portal) _portals[i].gameObject.SetActive(portal);
+                // The surface fills the hole up to the inner thin ring (r 0.6 of the circle): opaque, it hides the limb's end.
+                _portals[i].localRotation = Quaternion.Euler(0f, 0f, -0.3f * spinDeg);
+                _portals[i].localScale = Vector3.one * (radius * 0.6f);
+            }
             if (_root == null || _circles[i] == null || axis.sqrMagnitude < 1e-10f) return;
             var face = Quaternion.FromToRotation(Vector3.forward, axis.normalized);
             float grow = Stages.Smooth(show);
@@ -96,6 +109,7 @@ namespace MagicCircle
             {
                 _colorHex = hex;
                 _color = ParseColor(hex);
+                TintPortal();
             }
             float fade = Stages.Smooth(show);
             SetColor(_circleMat, _color, (0.85f + 0.15f * pulse) * fade);
@@ -118,6 +132,72 @@ namespace MagicCircle
         }
 
         // --- building ---------------------------------------------------------------------------------------------------------
+
+        /// <summary>The portal surface: opaque and unlit (it must hide what is behind it, so it writes depth like a solid), colour
+        /// baked into its texture. Unlit/Texture is loaded in the game; Unlit/Color as a fallback.</summary>
+        private Material MakePortalMaterial()
+        {
+            _portalShade = CirclePattern.Portal(TextureSize / 2);
+            int size = TextureSize / 2;
+            _portalTex = new Texture2D(size, size, TextureFormat.RGBA32, true) { name = "MagicCircle.Portal" };
+            _portalTex.wrapMode = TextureWrapMode.Clamp;
+            _portalTex.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            _owned.Add(_portalTex);
+            Shader shader = Shader.Find("Unlit/Texture");
+            bool textured = shader != null && shader.isSupported;
+            if (!textured) shader = Shader.Find("Unlit/Color");
+            var m = new Material(shader) { name = "MagicCircle.Portal" };
+            if (textured) m.mainTexture = _portalTex;
+            m.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            _owned.Add(m);
+            Plugin.Logger.LogInfo("[SFM-ACCEPT] portal surface: " + (shader == null ? "no shader" : shader.name));
+            return m;
+        }
+
+        private void TintPortal()
+        {
+            if (_portalTex == null || _portalShade == null) return;
+            var px = new Color32[_portalShade.Length];
+            for (int i = 0; i < px.Length; i++)
+            {
+                float v = _portalShade[i] / 255f;
+                px[i] = new Color32((byte)(255 * Mathf.Clamp01(_color.r * v)), (byte)(255 * Mathf.Clamp01(_color.g * v)), (byte)(255 * Mathf.Clamp01(_color.b * v)), 255);
+            }
+            _portalTex.SetPixels32(px);
+            _portalTex.Apply(true, false);
+            if (_portalMat != null && _portalMat.HasProperty("_Color")) _portalMat.SetColor("_Color", _color * 0.3f);
+        }
+
+        /// <summary>A round disc of radius 1 facing both ways (two sets of triangles: the unlit shader culls back faces).</summary>
+        private Mesh MakeDisc()
+        {
+            const int n = 48;
+            var v = new Vector3[n + 1];
+            var uv = new Vector2[n + 1];
+            v[0] = Vector3.zero;
+            uv[0] = new Vector2(0.5f, 0.5f);
+            for (int k = 0; k < n; k++)
+            {
+                float a = 2f * Mathf.PI * k / n;
+                v[k + 1] = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
+                uv[k + 1] = new Vector2(0.5f + 0.5f * Mathf.Cos(a), 0.5f + 0.5f * Mathf.Sin(a));
+            }
+            var tri = new int[n * 6];
+            for (int k = 0; k < n; k++)
+            {
+                int a = k + 1, b = (k + 1) % n + 1;
+                tri[6 * k] = 0; tri[6 * k + 1] = b; tri[6 * k + 2] = a;     // one side
+                tri[6 * k + 3] = 0; tri[6 * k + 4] = a; tri[6 * k + 5] = b; // the other
+            }
+            var m = new Mesh { name = "MagicCircle.Disc" };
+            m.vertices = v;
+            m.uv = uv;
+            m.triangles = tri;
+            m.RecalculateBounds();
+            m.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            _owned.Add(m);
+            return m;
+        }
 
         private Mesh MakeQuad()
         {

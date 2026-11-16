@@ -93,4 +93,29 @@ namespace MagicCircle.Logic
         /// <see cref="CirclePattern.ClearRadius"/>) <paramref name="room"/> times as wide as the limb.</summary>
         public static float OuterRadius(float limbRadius, float room) => limbRadius * room / CirclePattern.ClearRadius;
     }
+
+    /// <summary>
+    /// How far the shrunk limb's stump reaches past its collapse point: the skin around a joint is partly bound to the upper bone,
+    /// so it does not all collapse into the point. The circle (and the portal surface filling it) goes just beyond the farthest
+    /// skin, so no part of the stump shows past it.
+    /// </summary>
+    public static class Stump
+    {
+        /// <summary>The largest distance along <paramref name="axis"/> (unit, from the upper bone towards the joint) of the points
+        /// within <paramref name="radius"/> of the axis line through <paramref name="collapse"/> and at most
+        /// <paramref name="maxReach"/> past it (farther points belong to something else: hair, the other limb); 0 if none is past.</summary>
+        public static float Reach(System.Collections.Generic.IReadOnlyList<Vector3> points, Vector3 collapse, Vector3 axis, float radius, float maxReach)
+        {
+            float best = 0f, r2 = radius * radius;
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 d = points[i] - collapse;
+                float along = Vector3.Dot(d, axis);
+                if (along <= best || along > maxReach) continue;
+                if ((d - along * axis).LengthSquared() > r2) continue;
+                best = along;
+            }
+            return best;
+        }
+    }
 }

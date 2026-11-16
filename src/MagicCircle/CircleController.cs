@@ -102,7 +102,7 @@ namespace MagicCircle
             float target = Stages.Holds(Stage) && Machine.Worn ? 1f : 0f;
             _weight = Mathf.MoveTowards(_weight, target, Time.deltaTime / Plugin.BlendSeconds.Value);
             Status = (Machine.Worn ? Machine.State + ", " + Stages.Name(Stage) + " (w " + F(_weight) + "), " + Stages.PlacementName(CurrentPlacement)
-                      + ", hidden " + (FloatPoser.IsHidden ? "yes" : "no") : "off") + ", shader " + CircleRig.ShaderName;
+                      + ", hidden " + (FloatPoser.IsHidden ? "yes, stump " + _stump.Describe() : "no") : "off") + ", shader " + CircleRig.ShaderName;
         }
 
         // --- putting on / off ----------------------------------------------------------------------------------------------
@@ -269,6 +269,10 @@ namespace MagicCircle
 
         // --- pose (LateUpdate) and circles (onPreCull) -----------------------------------------------------------------------
 
+        private readonly StumpMeter _stump = new StumpMeter();
+        private readonly (System.Numerics.Vector3, System.Numerics.Vector3, float)[] _limbs = new (System.Numerics.Vector3, System.Numerics.Vector3, float)[4];
+        private const float StumpMargin = 0.004f; // m past the farthest skin
+
         private Camera.CameraCallback _preCull;
         private int _placedFrame = -1;
 
@@ -287,6 +291,7 @@ namespace MagicCircle
             var player = PlayerController.Instance;
             FloatPoser.Unhide(player == null || player.Pca == null ? null : player.Pca.Animator);
             _rig?.Destroy();
+            _stump.Destroy();
             if (Instance == this) Instance = null;
         }
 
@@ -360,6 +365,8 @@ namespace MagicCircle
                 float room = Plugin.Room.Value;
                 bool portal = CurrentPlacement == Placement.ElbowsAndKnees;
                 float before = Plugin.PortalBefore.Value / 100f;
+                bool hidden = portal && FloatPoser.IsHidden;
+                if (!hidden) _stump.Reset();
                 for (int i = 0; i < 4; i++)
                 {
                     bool arm = i < 2, left = i % 2 == 0;
@@ -378,14 +385,21 @@ namespace MagicCircle
                         b = anim.GetBoneTransform(portal ? (left ? HumanBodyBones.LeftLowerLeg : HumanBodyBones.RightLowerLeg) : (left ? HumanBodyBones.LeftFoot : HumanBodyBones.RightFoot));
                         limb = portal ? 0.15f * _body.Thigh : 0.09f * _body.Shin;
                     }
-                    if (a == null || b == null) continue;
+                    if (a == null || b == null) { _limbs[i] = default; continue; }
                     var pa = FloatPoser.N(a.position);
                     var pb = FloatPoser.N(b.position);
-                    var center = CircleSpot.Before(pa, pb, portal ? (FloatPoser.IsHidden ? 0f : before) : 0.012f);
                     float r = CircleSpot.OuterRadius(limb, room);
+                    var axis = pb - pa;
+                    axis = axis.LengthSquared() < 1e-10f ? System.Numerics.Vector3.UnitY : System.Numerics.Vector3.Normalize(axis);
+                    // Hidden: the circle and its portal surface just past the farthest skin of the stump (measured), so none of it
+                    // shows past the circle and the surface hides its end from the other side.
+                    _limbs[i] = (pb, axis, limb * room * 1.1f);
+                    var center = hidden ? pb + axis * (_stump.Reach(i) + StumpMargin)
+                               : CircleSpot.Before(pa, pb, portal ? before : 0.012f);
                     // Neighbouring circles turn opposite ways.
-                    _rig.Place(i, FloatPoser.U(center), b.position - a.position, r, (left ? spin : -spin) + i * 37f, show);
+                    _rig.Place(i, FloatPoser.U(center), b.position - a.position, r, (left ? spin : -spin) + i * 37f, show, hidden && _stump.Valid);
                 }
+                if (hidden) _stump.Tick(anim, _limbs);
                 _rig.Shade(Plugin.Color.Value, Plugin.Glow.Value, pulse, show);
             }
             catch (Exception e) { Fail("placing the circles", e); }
