@@ -295,7 +295,11 @@ namespace MagicCircle
         {
             Height = Plugin.FloatHeight.Value / 100f,
             ArmAngle = Plugin.ArmAngle.Value,
+            ElbowBend = Plugin.ElbowBend.Value,
             LegAngle = Plugin.LegAngle.Value,
+            KneeLift = Plugin.KneeLift.Value,
+            KneeBend = Plugin.KneeBend.Value,
+            Tilt = Plugin.Tilt.Value,
             BobAmplitude = Plugin.BobAmplitude.Value / 100f,
             BobPeriod = 3.2f,
         };
