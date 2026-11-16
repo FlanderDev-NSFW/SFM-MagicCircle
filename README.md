@@ -33,8 +33,10 @@ the floating height, arm and leg angles, the bob and how fast she rises; how har
 
 ## Good to know
 - The circles' place (wrists / elbows) is remembered in the settings; the stage and whether it is on are kept in the save.
-- With the circles at her elbows and knees, each circle is filled with a dark glowing portal surface: her limbs end in it,
-  nothing of them shows past it. In the "circles only" stage she still walks as if she had lower legs.
+- With the circles at her elbows and knees, each circle is a portal you can look into from her body's side: her limb goes on
+  inside and fades into the dark. From every other side there is nothing behind the circle (from beyond it you see a dark
+  glowing surface). See-through things of the game (glass, glowing markers) can be cut off where a portal's unseen inside is
+  in front of them. `Look.PortalInterior = false` gives a flat glowing surface instead. In the "circles only" stage she still walks as if she had lower legs.
 
 Single-player / offline only. Code: MIT licence (`LICENSE.txt`). The circles are drawn in code (no model or image files).
 

@@ -21,6 +21,7 @@ namespace MagicCircle.Tests
             PatternTests();
             PoseTests();
             StageTests();
+            TunnelTests();
             Console.WriteLine(_passed + " passed, " + _failed + " failed");
             return _failed == 0 ? 0 : 1;
         }
@@ -70,6 +71,35 @@ namespace MagicCircle.Tests
             bob.BobAmplitude = 0.01f;
             Check(Near(FloatPose.Hips(b, bob, 0.75f).Y - hips.Y, 0.01f, 1e-4f), "float: the bob at a quarter period is its amplitude");
             Check(FloatPose.ToeDir().Y < -0.8f, "float: toes point down");
+        }
+
+        private static void TunnelTests()
+        {
+            foreach (bool inside in new[] { false, true })
+            {
+                var m = Tunnel.Tube(16, inside);
+                bool ok = m.Indices.Length % 3 == 0 && m.Positions.Length == m.Uvs.Length;
+                for (int t = 0; ok && t < m.Indices.Length; t += 3)
+                {
+                    Vector3 a = m.Positions[m.Indices[t]], b = m.Positions[m.Indices[t + 1]], c = m.Positions[m.Indices[t + 2]];
+                    var n = Vector3.Cross(b - a, c - a);
+                    var mid = (a + b + c) / 3f;
+                    // Outwards: side faces away from the axis, the end cap towards +z.
+                    bool cap = a.Z == 1f && b.Z == 1f && c.Z == 1f;
+                    float outward = cap ? n.Z : n.X * mid.X + n.Y * mid.Y;
+                    if (inside ? outward >= 0f : outward <= 0f) ok = false;
+                }
+                Check(ok, "tunnel: every face looks " + (inside ? "inwards (walls)" : "outwards (mask)"));
+            }
+            var tube = Tunnel.Tube(16, false);
+            bool open = true;
+            for (int t = 0; t < tube.Indices.Length; t += 3)
+                if (tube.Positions[tube.Indices[t]].Z == 0f && tube.Positions[tube.Indices[t + 1]].Z == 0f && tube.Positions[tube.Indices[t + 2]].Z == 0f) open = false;
+            Check(open, "tunnel: open at the circle");
+            // Vertices 0..5 along a limb: 0 not the limb's, 1-5 its own; 5 is past the end; 3 sticks out past the clip point.
+            float[] along = { -0.05f, 0.0f, 0.05f, 0.08f, 0.10f, 0.30f }, radial = { 0.03f, 0.03f, 0.03f, 0.20f, 0.03f, 0.03f };
+            var kept = Tunnel.LimbTriangles(new[] { 0, 1, 2,  1, 2, 4,  2, 3, 4,  2, 4, 5,  0, 0, 0 }, v => v > 0, v => along[v], v => radial[v], 0.2f, 0.06f, 0.1f);
+            Check(kept.Count == 6 && kept[0] == 0 && kept[3] == 1, "limb copy: own skin kept (also joined to the body), past the end / out of the wall dropped, foreign skin dropped");
         }
 
         private static void StageTests()

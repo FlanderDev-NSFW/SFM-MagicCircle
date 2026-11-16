@@ -273,6 +273,11 @@ namespace MagicCircle
         private readonly (System.Numerics.Vector3, System.Numerics.Vector3, float)[] _limbs = new (System.Numerics.Vector3, System.Numerics.Vector3, float)[4];
         private const float StumpMargin = 0.004f; // m past the farthest skin
 
+        private readonly PortalInterior _interior = new PortalInterior();
+        private readonly Transform[] _upper = new Transform[4];
+        private readonly Vector3[] _center = new Vector3[4], _axis = new Vector3[4];
+        private readonly float[] _tunnelRadius = new float[4], _along = new float[4];
+
         private Camera.CameraCallback _preCull;
         private int _placedFrame = -1;
 
@@ -292,6 +297,7 @@ namespace MagicCircle
             FloatPoser.Unhide(player == null || player.Pca == null ? null : player.Pca.Animator);
             _rig?.Destroy();
             _stump.Destroy();
+            _interior.Destroy();
             if (Instance == this) Instance = null;
         }
 
@@ -350,7 +356,7 @@ namespace MagicCircle
             {
                 if (_placedFrame == Time.frameCount) return;
                 _placedFrame = Time.frameCount;
-                if (!Machine.Worn || _rig == null || !_rig.Built) { _rig?.SetVisible(false); return; }
+                if (!Machine.Worn || _rig == null || !_rig.Built) { _rig?.SetVisible(false); _interior.Forget(); return; }
                 var player = PlayerController.Instance;
                 var anim = player == null || player.Pca == null ? null : player.Pca.Animator;
                 if (anim == null) return;
@@ -366,7 +372,11 @@ namespace MagicCircle
                 bool portal = CurrentPlacement == Placement.ElbowsAndKnees;
                 float before = Plugin.PortalBefore.Value / 100f;
                 bool hidden = portal && FloatPoser.IsHidden;
-                if (!hidden) _stump.Reset();
+                if (!hidden) { _stump.Reset(); _interior.Forget(); }
+                float pull = before; // FloatPoser.Hide moves the collapse point this far before the joint
+                bool wantInside = hidden && Plugin.Interior.Value && _interior.Supported;
+                bool inside = wantInside && _interior.Built && _interior.Captured;
+                bool placed = false;
                 for (int i = 0; i < 4; i++)
                 {
                     bool arm = i < 2, left = i % 2 == 0;
@@ -396,10 +406,28 @@ namespace MagicCircle
                     _limbs[i] = (pb, axis, limb * room * 1.1f);
                     var center = hidden ? pb + axis * (_stump.Reach(i) + StumpMargin)
                                : CircleSpot.Before(pa, pb, portal ? before : 0.012f);
-                    // Neighbouring circles turn opposite ways.
-                    _rig.Place(i, FloatPoser.U(center), b.position - a.position, r, (left ? spin : -spin) + i * 37f, show, hidden && _stump.Valid);
+                    // Neighbouring circles turn opposite ways. The flat surface closes the circle unless its inside is shown.
+                    _rig.Place(i, FloatPoser.U(center), b.position - a.position, r, (left ? spin : -spin) + i * 37f, show, hidden && _stump.Valid && !inside);
+                    _upper[i] = a;
+                    _center[i] = FloatPoser.U(center);
+                    _axis[i] = FloatPoser.U(axis);
+                    _tunnelRadius[i] = 0.9f * r; // the whole circle is the mouth: the runes glow over it
+                    _along[i] = hidden ? _stump.Reach(i) + StumpMargin - pull : 0f; // the circle's place from the true joint
+                    if (i == 3) placed = true;
                 }
                 if (hidden) { _stump.Tick(anim, _limbs); _stump.Step(Time.unscaledDeltaTime); } // bakes shrunk and grown: only the limbs' own skin counts
+                if (wantInside && placed && _stump.Valid)
+                {
+                    if (!_interior.Built && _interior.Supported) _interior.Build(anim.gameObject.layer, _rig.PortalMaterial);
+                    if (_interior.Built && _interior.NeedsCapture(anim, _tunnelRadius, pull)) _interior.Capture(anim, _tunnelRadius, pull);
+                    if (_interior.Built && _interior.Captured)
+                    {
+                        _interior.Tint(Plugin.Color.Value);
+                        for (int i = 0; i < 4; i++)
+                            _interior.Place(i, _center[i], _axis[i], _tunnelRadius[i], _interior.EndAlong(i) - _along[i], _upper[i]);
+                    }
+                }
+                _interior.SetVisible(wantInside && _interior.Built && _interior.Captured);
                 _rig.Shade(Plugin.Color.Value, Plugin.Glow.Value, pulse, show);
             }
             catch (Exception e) { Fail("placing the circles", e); }

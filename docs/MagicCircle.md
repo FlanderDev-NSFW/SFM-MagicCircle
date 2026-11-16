@@ -54,7 +54,23 @@ A RestraintHub wearable (`Id` `MagicCircle`, hub `^2.0.0`): four glowing circles
   surface** fills its hole up to the inner ring (r 0.6 of the circle): `Unlit/Texture` (opaque, writes depth like a solid, so it
   hides the limb's end seen from beyond the circle), a two-sided disc, dark middle brightening to the rim with a faint swirl,
   tinted with `Look.Color`, turning slowly. No depth-mask shader is available (none loaded, none can be compiled without the
-  Unity editor), so the opaque surface is the occluder.
+  Unity editor), so the opaque surface is the occluder. (Wrong about the mask - see the next point; the flat surface is now
+  only the fallback, `Look.PortalInterior` false.)
+- **Looking inside (`PortalInterior.cs`, `Logic/Tunnel.cs`):** behind each circle a tube from the circle's plane to a fixed
+  point past the true joint (65 % of the forearm, 50 % of the shin; radius 0.9 of the circle, so the whole circle is the mouth).
+  Render queues after the opaque scene and the sky, before ordinary transparents: far disc 2980 (the portal surface, facing away
+  from her only) -> mask 2985 (the tube's outside, **depth only: the game's `Particles/Standard Unlit` with `_SrcBlend` 0,
+  `_DstBlend` 1, `_ZWrite` 1, `_Cull` 2**) -> walls 2988 (`Unlit/Texture`, inside faces, the colour at the mouth fading to
+  black) -> limb copy 2990 -> veils 2992 (seven black discs, alpha 0.24: the limb fades with depth). What is drawn after the
+  mask inside the tube shows only through the mouth; from beyond, the far disc (drawn before the mask) closes the view.
+  **Limb copy:** her skinned meshes baked twice in onPreCull - limbs at full size and straight (lower bone turned into line
+  with the upper one), and shrunk - the bake's mesh is readable (vertices, normals, UVs, triangles per submesh). Triangles
+  with a vertex of the limb's own skin (moved > 2 mm, nearest straight segment), not past the tube's end and not outside its
+  wall past the collapse point, become a rigid mesh in the upper bone's coordinates, with copies of her materials at queue
+  2990. It starts where the real skin starts to shrink, so it also covers the stump. Captured again when her enabled renderers
+  change (checked every 5 s), the tube's size or `PortalBeforeCm` changes; forgotten when the limbs show again.
+  Limits: transparent things drawn later (queue 3000+: the game's interaction markers, glass) are cut off behind a tube; the
+  copy is straight whatever her knee does and does not receive shadows; no fingers / feet inside (it ends in the dark).
 
 ## Diagnostics (bridge, `--allow-invoke`)
 `game get MagicCircle.CircleController::Status` ("Locked, floating (w 1.00), elbows and knees, hidden yes, shader ..."),
@@ -76,5 +92,11 @@ Shaders <part>`. `Debug.Disable`: 1 = no pose, 2 = no hiding. Log markers: `put 
   points"; floating, close-ups of the knees from the front, the side and below and of the elbows from below and above: the limbs
   end in the surface, no skin past the circles, the stump ends hidden from beyond (screenshots); standing in the "circles only"
   stage likewise. Not tested: deep knee bends (crawling), other clothes.
+- L3 portal interior (2026-11-16): "portal interior: built (mask Particles/Standard Unlit, walls Unlit/Texture)", "copy: 2 / 2 /
+  1 / 1 parts, 1992 triangles; ends 14.9 / 19.3 cm past elbow / knee". Floating and standing, two characters (one in the coat,
+  one nude): from above the knees one looks into the circle and sees the shin go on and fade (screenshots); from the side
+  nothing below the circle, the room visible where the tube is (mask works); from below the far discs; walking: nothing sticks
+  out. Seen: the PC's glowing floor marker cut off behind a tube (the transparent limit above). Not tested: outdoors against
+  the sky, clothes changed while worn, other body shapes.
 - Not tested: the RestraintHub panel row (bridge diagnostics used instead of `U`; same `PutOn`), the closet changing her body
   while hidden (same adjuster mechanism), missions, other characters' proportions, outdoor maps.

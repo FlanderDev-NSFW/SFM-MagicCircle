@@ -29,7 +29,7 @@ namespace MagicCircle
         public static ConfigEntry<float> AttemptSeconds, SuccessChance;
         public static ConfigEntry<float> Room, SpinSpeed, Glow, PulseSeconds, PortalBefore;
         public static ConfigEntry<float> FloatHeight, ArmAngle, LegAngle, BobAmplitude, BlendSeconds;
-        public static ConfigEntry<bool> HideLimbs;
+        public static ConfigEntry<bool> HideLimbs, Interior;
         public static ConfigEntry<int> DebugDisable;
 
         public override void Load()
@@ -57,6 +57,9 @@ namespace MagicCircle
                 "ElbowsAndKnees: how far before the joint the circle forms (cm); the hidden limb ends there.", new AcceptableValueRange<float>(0f, 15f)));
             HideLimbs = Config.Bind("Look", "HideLimbs", true,
                 "ElbowsAndKnees: hide her forearms and lower legs past the circles (shrunk into the joint).");
+            Interior = Config.Bind("Look", "PortalInterior", true,
+                "ElbowsAndKnees with hidden limbs: from her body's side one can look into the portals and see her limbs go on inside " +
+                "(a tunnel behind each circle, invisible from every other side). Off: a flat glowing surface closes each circle.");
             FloatHeight = Config.Bind("Float", "HeightCm", 20f, new ConfigDescription(
                 "Floating stage: how high her feet float above the ground (cm).", new AcceptableValueRange<float>(0f, 100f)));
             ArmAngle = Config.Bind("Float", "ArmAngle", 25f, new ConfigDescription(

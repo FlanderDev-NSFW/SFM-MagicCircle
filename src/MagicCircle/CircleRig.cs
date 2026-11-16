@@ -26,6 +26,9 @@ namespace MagicCircle
 
         public bool Built => _root != null;
 
+        /// <summary>The portal surface's material (the interior's far disc copies it; they share its texture).</summary>
+        public Material PortalMaterial => _portalMat;
+
         public void Build(int layer)
         {
             try { BuildParts(layer); }
