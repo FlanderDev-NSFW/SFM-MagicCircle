@@ -18,7 +18,7 @@ selected restraint:
 
 | Key | Does |
 |---|---|
-| `+` / `-` | change the stage: **circles only** (she moves freely) / **floating** (held in the air, leaning back a little, arms raised with soft elbows, legs apart with the knees drawn up) |
+| `+` / `-` | change the stage: **circles only** (she moves freely) / **floating** (held in the air, arms raised, legs a little apart) |
 | tap `F` | move the circles between **wrists and ankles** and **elbows and knees** (her forearms and lower legs hidden past them) |
 | hold `F` | struggle free (she sinks down while the circles fade) |
 
@@ -29,7 +29,7 @@ holding `V` to take everything off, missions.
 ## Settings
 `BepInEx/config/FlanderDev.SFM.MagicCircle.cfg` (created on the first start): colour (`Look.Color`, hex such as `FF70E0`),
 size, spin speed, glow and pulse; how far before the elbows / knees the portal circles form and whether limbs are hidden there;
-the floating pose (height, arm angle and elbow bend, leg spread, knee lift and bend, tilt back), the bob and how fast she rises; how hard it is to struggle free.
+the floating height, arm and leg angles, the bob and how fast she rises; how hard it is to struggle free.
 
 ## Good to know
 - The circles' place (wrists / elbows) is remembered in the settings; the stage and whether it is on are kept in the save.

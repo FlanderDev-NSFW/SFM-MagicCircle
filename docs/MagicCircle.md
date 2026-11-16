@@ -28,11 +28,8 @@ A RestraintHub wearable (`Id` `MagicCircle`, hub `^2.0.0`): four glowing circles
   (`_SrcBlend` 5, `_DstBlend` 1, `_ZWrite` 0, `_Cull` 0, `_ALPHABLEND_ON`), colour in `_Color` (alpha = strength) works.
   `Shader.Find("Legacy Shaders/Particles/Additive (Soft)")` returned a shader that drew white without a tint.
 - **Floating:** frame captured when the stage starts (her root position and yaw). Hips at `HeightCm + ankle height (18 % of
-  the shin) + the legs' drop + hip drop` (the legs' drop from their untilted directions), thigh joints level; the whole body
-  leaned back `Tilt` (12) about the hips: every direction turned about her right axis, so the spine bones aim along the tilted
-  up. Legs `LegAngle` (14) out, thighs `KneeLift` (22) forward, shins `KneeBend` (45) back from them, toes pointed (down and a
-  little forward); upper arms `ArmAngle` (32) out from vertical, forearms `ElbowBend` (30) in towards the head, a little
-  forward. Bob 3.2 s. (0.1.0 first had straight limbs, 25 / 8 degrees, no tilt: "too stretched".) Pointed toes use
+  the shin) + straight legs + hip drop`, upright, thigh joints level; spine bones aimed straight up; legs at `LegAngle` out,
+  toes pointed (down and a little forward); arms `ArmAngle` out from vertical, a touch forward. Bob 3.2 s. Pointed toes use
   about 10 cm of the height: at 15 cm the toe joints were 10.4 cm up (standing: 1.9 cm), so the default is 20 cm.
 - **Portal (ElbowsAndKnees + `HideLimbs`):** at the end of LateUpdate the forearm and lower-leg bones are moved
   `PortalBeforeCm` back towards the upper bone and scaled to 1e-4 (the skin of forearm, hand, shin and foot collapses into that
@@ -49,7 +46,7 @@ Shaders <part>`. `Debug.Disable`: 1 = no pose, 2 = no hiding. Log markers: `put 
 `attempt:`, `release:`, `portal:`, `save:` / `load:`, `shader:`.
 
 ## Verification
-- L1: 27 tests (pattern: empty middle, rings drawn, deterministic; pose: heights, lengths, angles, bob; stages; circle spot).
+- L1: 22 tests (pattern: empty middle, rings drawn, deterministic; pose: heights, lengths, angles, bob; stages; circle spot).
 - L3 0.1.0 (2026-11-16, first save, apartment): put on -> "circles formed", circles at the ankles (close-up screenshot: pink
   rings, runes, star, glow). Step 1 -> "The circles lift her off the ground.", floating narrow X with circles at wrists and
   ankles (screenshot from behind), toes 10.4 cm up (1.9 standing). Switch -> elbows and knees, forearms / lower legs hidden
@@ -58,8 +55,5 @@ Shaders <part>`. `Debug.Disable`: 1 = no pose, 2 = no hiding. Log markers: `put 
   PC -> Save while floating: "save: locked=True stage=1"; restart + load -> floating, portal hidden; the adjuster
   compensation found and undone (above), screenshot; release -> all scales 1, normal hands and feet (screenshot). Yoke on,
   + -> "The circles can't hold her while the Yoke is on.".
-- L3 pose rework (2026-11-16, user: "less stretched, slightly tilt her whole body backwards, spread & pull in legs a bit"):
-  side and back screenshots - leaning back, knees forward and shins back, legs wider, forearms bent in over her head;
-  toes 19 cm up.
 - Not tested: the RestraintHub panel row (bridge diagnostics used instead of `U`; same `PutOn`), the closet changing her body
   while hidden (same adjuster mechanism), missions, other characters' proportions, outdoor maps.

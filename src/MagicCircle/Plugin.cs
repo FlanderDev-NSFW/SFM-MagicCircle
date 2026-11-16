@@ -28,7 +28,7 @@ namespace MagicCircle
         public static ConfigEntry<Placement> Where;
         public static ConfigEntry<float> AttemptSeconds, SuccessChance;
         public static ConfigEntry<float> Room, SpinSpeed, Glow, PulseSeconds, PortalBefore;
-        public static ConfigEntry<float> FloatHeight, ArmAngle, ElbowBend, LegAngle, KneeLift, KneeBend, Tilt, BobAmplitude, BlendSeconds;
+        public static ConfigEntry<float> FloatHeight, ArmAngle, LegAngle, BobAmplitude, BlendSeconds;
         public static ConfigEntry<bool> HideLimbs;
         public static ConfigEntry<int> DebugDisable;
 
@@ -59,18 +59,10 @@ namespace MagicCircle
                 "ElbowsAndKnees: hide her forearms and lower legs past the circles (shrunk into the joint).");
             FloatHeight = Config.Bind("Float", "HeightCm", 20f, new ConfigDescription(
                 "Floating stage: how high her feet float above the ground (cm).", new AcceptableValueRange<float>(0f, 100f)));
-            ArmAngle = Config.Bind("Float", "ArmAngle", 32f, new ConfigDescription(
-                "Floating stage: each upper arm's angle out from straight up (degrees; a narrow X).", new AcceptableValueRange<float>(0f, 80f)));
-            ElbowBend = Config.Bind("Float", "ElbowBend", 30f, new ConfigDescription(
-                "Floating stage: how far the forearms bend in towards her head (degrees; 0 = straight arms).", new AcceptableValueRange<float>(0f, 90f)));
-            LegAngle = Config.Bind("Float", "LegAngle", 14f, new ConfigDescription(
-                "Floating stage: each leg's angle out to its side (degrees).", new AcceptableValueRange<float>(0f, 40f)));
-            KneeLift = Config.Bind("Float", "KneeLift", 22f, new ConfigDescription(
-                "Floating stage: how far the thighs are drawn forward (degrees; 0 = straight down).", new AcceptableValueRange<float>(0f, 90f)));
-            KneeBend = Config.Bind("Float", "KneeBend", 45f, new ConfigDescription(
-                "Floating stage: how far the shins bend back at the knees (degrees; 0 = straight legs).", new AcceptableValueRange<float>(0f, 120f)));
-            Tilt = Config.Bind("Float", "Tilt", 12f, new ConfigDescription(
-                "Floating stage: how far her whole body leans back (degrees).", new AcceptableValueRange<float>(-30f, 45f)));
+            ArmAngle = Config.Bind("Float", "ArmAngle", 25f, new ConfigDescription(
+                "Floating stage: each arm's angle out from straight up (degrees; a narrow X).", new AcceptableValueRange<float>(0f, 80f)));
+            LegAngle = Config.Bind("Float", "LegAngle", 8f, new ConfigDescription(
+                "Floating stage: each leg's angle out from straight down (degrees).", new AcceptableValueRange<float>(0f, 40f)));
             BobAmplitude = Config.Bind("Float", "BobCm", 1.2f, new ConfigDescription(
                 "Floating stage: how far she drifts slowly up and down (cm).", new AcceptableValueRange<float>(0f, 10f)));
             BlendSeconds = Config.Bind("Float", "BlendSeconds", 1.2f, new ConfigDescription(

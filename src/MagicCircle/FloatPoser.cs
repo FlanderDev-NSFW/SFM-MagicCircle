@@ -72,7 +72,7 @@ namespace MagicCircle
             Vector3 savedHips = hips.localPosition;
             Vector3 W(NVector3 p) => origin + frame * U(p);
             Vector3 Dir(NVector3 d) => frame * U(d);
-            Vector3 up = Dir(FloatPose.Up(s)), right = frame * Vector3.right; // the tilt turns about her right axis
+            Vector3 up = frame * Vector3.up, right = frame * Vector3.right;
 
             // Hips: upright, thigh joints level across her, at the floating height.
             Transform spine = B(HumanBodyBones.Spine), chest = B(HumanBodyBones.Chest), upperChest = B(HumanBodyBones.UpperChest);
@@ -98,15 +98,17 @@ namespace MagicCircle
                 Transform ll = B(side == 0 ? HumanBodyBones.LeftLowerLeg : HumanBodyBones.RightLowerLeg);
                 Transform ft = B(side == 0 ? HumanBodyBones.LeftFoot : HumanBodyBones.RightFoot);
                 Transform toes = B(side == 0 ? HumanBodyBones.LeftToes : HumanBodyBones.RightToes);
-                Aim(ul, ll, ul.position + Dir(FloatPose.ThighDir(s, side)) * b.Thigh);
-                Aim(ll, ft, ll.position + Dir(FloatPose.ShinDir(s, side)) * b.Shin);
-                if (toes != null) Aim(ft, toes, ft.position + Dir(FloatPose.ToeDir(s)));
+                Vector3 legDir = Dir(FloatPose.LegDir(s, side));
+                Aim(ul, ll, ul.position + legDir * b.Thigh);
+                Aim(ll, ft, ll.position + legDir * b.Shin);
+                if (toes != null) Aim(ft, toes, ft.position + Dir(FloatPose.ToeDir()));
 
                 Transform ua = B(side == 0 ? HumanBodyBones.LeftUpperArm : HumanBodyBones.RightUpperArm);
                 Transform la = B(side == 0 ? HumanBodyBones.LeftLowerArm : HumanBodyBones.RightLowerArm);
                 Transform hd = B(side == 0 ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand);
-                Aim(ua, la, ua.position + Dir(FloatPose.UpperArmDir(s, side)) * b.UpperArm);
-                Aim(la, hd, la.position + Dir(FloatPose.ForearmDir(s, side)) * b.Forearm);
+                Vector3 armDir = Dir(FloatPose.ArmDir(s, side));
+                Aim(ua, la, ua.position + armDir * b.UpperArm);
+                Aim(la, hd, la.position + armDir * b.Forearm);
             }
 
             if (weight >= 1f) return;

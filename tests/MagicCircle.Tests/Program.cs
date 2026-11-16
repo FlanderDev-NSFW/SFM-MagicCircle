@@ -53,35 +53,23 @@ namespace MagicCircle.Tests
         private static void PoseTests()
         {
             var b = new BodyDims { Thigh = 0.4f, Shin = 0.38f, UpperArm = 0.25f, Forearm = 0.22f, HipHalf = 0.08f, HipDrop = 0.05f, AnkleHeight = 0.07f };
-            var straight = new FloatSettings { Height = 0.15f, ArmAngle = 25f, LegAngle = 8f, BobPeriod = 3f };
-            var hips = FloatPose.Hips(b, straight, 0f);
+            var s = new FloatSettings { Height = 0.15f, ArmAngle = 25f, LegAngle = 8f, BobAmplitude = 0f, BobPeriod = 3f };
+            var hips = FloatPose.Hips(b, s, 0f);
             float leg = 0.78f * (float)Math.Cos(8 * Math.PI / 180);
-            Check(Near(hips.Y, 0.15f + 0.07f + leg + 0.05f), "float: straight legs - hips high enough for them to end 15 cm up");
-
-            var s = new FloatSettings { Height = 0.15f, ArmAngle = 32f, ElbowBend = 30f, LegAngle = 14f, KneeLift = 22f, KneeBend = 45f, BobPeriod = 3f };
-            hips = FloatPose.Hips(b, s, 0f);
+            Check(Near(hips.Y, 0.15f + 0.07f + leg + 0.05f), "float: hips high enough for straight legs to end 15 cm up");
             var thigh = new Vector3(-0.08f, hips.Y - 0.05f, 0f);
-            var (knee, foot) = FloatPose.LegJoints(b, s, 0, thigh);
-            Check(Near(foot.Y, 0.15f + 0.07f, 1e-3f), "float: bent legs - ankles at the floating height above the soles");
+            var (knee, foot) = FloatPose.Leg(b, s, 0, thigh);
+            Check(Near(foot.Y, 0.15f + 0.07f, 1e-3f), "float: soles at the floating height (ankle above them)");
+            Check(foot.X < thigh.X && knee.X < thigh.X, "float: the left leg swings out to her left");
             Check(Near(Vector3.Distance(thigh, knee), 0.4f) && Near(Vector3.Distance(knee, foot), 0.38f), "float: bones keep their lengths");
-            Check(knee.Z > 0.1f && foot.Z < knee.Z, "float: knees drawn forward, shins bent back");
-            Check(foot.X < thigh.X - 0.1f, "float: the left leg spreads out to her left");
-            Check(hips.Y < FloatPose.Hips(b, straight, 0f).Y, "float: bent legs need the hips lower (less stretched)");
-            var up = FloatPose.UpperArmDir(s, 1);
-            var fore = FloatPose.ForearmDir(s, 1);
-            Check(up.X > 0f && up.Y > 0.8f && Near(up.Length(), 1f), "float: the right upper arm points up and out");
-            Check(fore.X < up.X && fore.Y > 0.8f, "float: the forearm bends in towards her head");
-
-            var tilted = s;
-            tilted.Tilt = 12f;
-            var spine = FloatPose.Up(tilted);
-            Check(spine.Z < 0f && Near((float)(Math.Acos(spine.Y) * 180 / Math.PI), 12f, 0.1f), "float: tilt leans her back by its angle");
-            Check(FloatPose.ThighDir(tilted, 0).Z > FloatPose.ThighDir(s, 0).Z, "float: with the tilt the legs swing forward");
-            Check(Near(FloatPose.Tilted(tilted, Vector3.UnitX).X, 1f), "float: the tilt turns about her right axis");
+            var r = FloatPose.ArmDir(s, 1);
+            Check(r.X > 0f && r.Y > 0.85f && Near(r.Length(), 1f), "float: the right arm points up and out to her right");
+            float angle = (float)(Math.Acos(Vector3.Dot(Vector3.Normalize(new Vector3(r.X, r.Y, 0f)), Vector3.UnitY)) * 180 / Math.PI);
+            Check(Near(angle, 25f, 0.5f), "float: arm at the set angle from straight up (" + angle.ToString("0.0") + ")");
             var bob = s;
             bob.BobAmplitude = 0.01f;
             Check(Near(FloatPose.Hips(b, bob, 0.75f).Y - hips.Y, 0.01f, 1e-4f), "float: the bob at a quarter period is its amplitude");
-            Check(FloatPose.ToeDir(s).Y < -0.8f, "float: toes point down");
+            Check(FloatPose.ToeDir().Y < -0.8f, "float: toes point down");
         }
 
         private static void StageTests()
