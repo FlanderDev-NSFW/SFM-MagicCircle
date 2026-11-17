@@ -1,4 +1,4 @@
-# MagicCircle 0.1.0
+# MagicCircle 1.0.0
 
 Glowing magic circles form around her wrists and ankles - or just before her elbows and knees, where her limbs vanish as if
 through a portal. They turn slowly and pulse softly; one stage only shows them, the next lifts her off the ground into a

@@ -4,7 +4,7 @@
 > and `docs/knowledge/` refer to that kit). The player readme is [`README.md`](../README.md).
 
 A RestraintHub wearable (`Id` `MagicCircle`, hub `^2.0.0`): four glowing circles on her limbs, stages (+ / -), two placements
-(tap F), struggle (hold F). Status 0.1.0: L3 (verified in game by the agent, 2026-11-16); not released.
+(tap F), struggle (hold F). Status 1.0.0: L3 (verified in game by the agent, 2026-11-16); first release 1.0.0 (2026-11-17, was 0.1.0 in development).
 
 ## Files
 - `Plugin.cs`: config, the `Wearable` (`Holds` changes with the stage: none / `Arms | Legs | Spot`; `Blocks` likewise:
